@@ -4,63 +4,58 @@ using System.Collections.Generic;
 public class Maze
 {
     private readonly Dictionary<(int x, int y), bool[]> _map;
-    private int _x = 1;
-    private int _y = 1;
+    private (int x, int y) _currentPosition;
 
-    // Directions are ordered: Up, Right, Down, Left
-    // bool[] indicates if you can move in that direction from the cell
-    public Maze(Dictionary<(int, int), bool[]> map)
+    public Maze(Dictionary<(int x, int y), bool[]> map)
     {
         _map = map;
+        _currentPosition = (1, 1);
     }
 
     public string GetStatus()
     {
-        return $"Current location (x={_x}, y={_y})";
+        return $"Current location (x={_currentPosition.x}, y={_currentPosition.y})";
+    }
+
+    private void CheckMove(string direction, (int x, int y) newPosition, int index)
+    {
+        if (!_map.ContainsKey(_currentPosition))
+        {
+            throw new InvalidOperationException("Current position not in maze.");
+        }
+
+        var walls = _map[_currentPosition];
+        if (!walls[index]) // If there's no wall in the direction
+        {
+            if (!_map.ContainsKey(newPosition))
+            {
+                throw new InvalidOperationException("Can't go that way!");
+            }
+            _currentPosition = newPosition;
+        }
+        else
+        {
+            throw new InvalidOperationException("Can't go that way!");
+        }
     }
 
     public void MoveUp()
     {
-        TryMove(0, -1, 0);
+        CheckMove("up", (_currentPosition.x, _currentPosition.y - 1), 0);
     }
 
     public void MoveRight()
     {
-        TryMove(1, 0, 1);
+        CheckMove("right", (_currentPosition.x + 1, _currentPosition.y), 1);
     }
 
     public void MoveDown()
     {
-        TryMove(0, 1, 2);
+        CheckMove("down", (_currentPosition.x, _currentPosition.y + 1), 2);
     }
 
     public void MoveLeft()
     {
-        TryMove(-1, 0, 3);
-    }
-
-    private void TryMove(int dx, int dy, int directionIndex)
-    {
-        var currentCell = (_x, _y);
-
-        if (!_map.ContainsKey(currentCell))
-            throw new InvalidOperationException("Current position not in map!");
-
-        // Check if movement is allowed in this direction
-        if (!_map[currentCell][directionIndex])
-            throw new InvalidOperationException("Can't go that way!");
-
-        // Calculate new position
-        var newX = _x + dx;
-        var newY = _y + dy;
-
-        if (!_map.ContainsKey((newX, newY)))
-            throw new InvalidOperationException("Can't go that way!");
-
-        // Check if the opposite direction is allowed from the new cell (optional)
-        // (Could be omitted if map is consistent)
-
-        _x = newX;
-        _y = newY;
+        CheckMove("left", (_currentPosition.x - 1, _currentPosition.y), 3);
     }
 }

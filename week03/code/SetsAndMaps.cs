@@ -1,108 +1,95 @@
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Net.Http;
 using System.Text.Json;
 
 public static class SetsAndMaps
 {
+    // Problem 1: FindPairs
     public static string[] FindPairs(string[] words)
     {
         var set = new HashSet<string>(words);
         var result = new List<string>();
-        var visited = new HashSet<string>();
 
         foreach (var word in words)
         {
-            if (word[0] == word[1]) continue;
-
-            var rev = new string(new[] { word[1], word[0] });
-
-            if (set.Contains(rev) && !visited.Contains(word) && !visited.Contains(rev))
+            if (word[0] == word[1]) continue; // skip pairs like "aa"
+            var reversed = new string(new[] { word[1], word[0] });
+            if (set.Contains(reversed) && String.Compare(word, reversed) < 0)
             {
-                var pair = new[] { word, rev }.OrderBy(s => s).Aggregate((a, b) => a + " & " + b);
-                result.Add(pair);
-                visited.Add(word);
-                visited.Add(rev);
+                result.Add($"{word} & {reversed}");
             }
         }
 
         return result.ToArray();
     }
 
+    // Problem 2: SummarizeDegrees
     public static Dictionary<string, int> SummarizeDegrees(string filename)
     {
         var degrees = new Dictionary<string, int>();
-
         foreach (var line in File.ReadLines(filename))
         {
-            var fields = line.Split(',');
-
-            if (fields.Length < 4) continue;
-
-            var degree = fields[3].Trim();
-
+            var fields = line.Split(",");
+            if (fields.Length < 4) continue; // skip bad lines
+            var degree = fields[3];
             if (degrees.ContainsKey(degree))
+            {
                 degrees[degree]++;
+            }
             else
+            {
                 degrees[degree] = 1;
+            }
         }
-
         return degrees;
     }
 
+    // Problem 3: IsAnagram
     public static bool IsAnagram(string word1, string word2)
     {
-        if (word1 == null || word2 == null)
-            return false;
+        var w1 = word1.Replace(" ", "").ToLower();
+        var w2 = word2.Replace(" ", "").ToLower();
 
-        string a = new string(word1.Where(c => !char.IsWhiteSpace(c)).ToArray()).ToLower();
-        string b = new string(word2.Where(c => !char.IsWhiteSpace(c)).ToArray()).ToLower();
+        if (w1.Length != w2.Length) return false;
 
-        if (a.Length != b.Length)
-            return false;
-
-        var count = new Dictionary<char, int>();
-
-        foreach (var c in a)
-            count[c] = count.GetValueOrDefault(c, 0) + 1;
-
-        foreach (var c in b)
+        var charCount = new Dictionary<char, int>();
+        foreach (var c in w1)
         {
-            if (!count.ContainsKey(c))
-                return false;
+            charCount[c] = charCount.GetValueOrDefault(c) + 1;
+        }
 
-            count[c]--;
-            if (count[c] < 0)
-                return false;
+        foreach (var c in w2)
+        {
+            if (!charCount.ContainsKey(c)) return false;
+            charCount[c]--;
+            if (charCount[c] < 0) return false;
         }
 
         return true;
     }
 
+    // Problem 5: EarthquakeDailySummary
     public static string[] EarthquakeDailySummary()
     {
         const string uri = "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojson";
         using var client = new HttpClient();
-        var json = client.GetStringAsync(uri).Result;
-
+        using var getRequestMessage = new HttpRequestMessage(HttpMethod.Get, uri);
+        using var jsonStream = client.Send(getRequestMessage).Content.ReadAsStream();
+        using var reader = new StreamReader(jsonStream);
+        var json = reader.ReadToEnd();
         var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
 
         var featureCollection = JsonSerializer.Deserialize<FeatureCollection>(json, options);
 
-        if (featureCollection == null || featureCollection.Features == null)
-            return Array.Empty<string>();
+        if (featureCollection?.Features == null) return Array.Empty<string>();
 
-        var summaries = new List<string>();
+        var results = new List<string>();
         foreach (var feature in featureCollection.Features)
         {
-            var place = feature.Properties.Place ?? "Unknown location";
-            var mag = feature.Properties.Mag.HasValue ? feature.Properties.Mag.Value.ToString("F1") : "N/A";
-
-            summaries.Add($"{place} - Mag {mag}");
+            if (feature.Properties?.Place != null)
+            {
+                results.Add($"{feature.Properties.Place} - Mag {feature.Properties.Mag}");
+            }
         }
 
-        return summaries.ToArray();
+        return results.ToArray();
     }
 }
