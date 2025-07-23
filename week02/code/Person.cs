@@ -1,6 +1,6 @@
 public class Person
 {
-    public readonly string Name;
+    public string Name { get; }
     public int Turns { get; set; }
 
     internal Person(string name, int turns)
