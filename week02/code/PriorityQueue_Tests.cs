@@ -7,7 +7,7 @@ public class PriorityQueueTests
     [TestMethod]
     // Scenario: Add three items with different priorities.
     // Expected Result: Highest priority item is dequeued first.
-    // Defect(s) Found: None yet.
+    // Defect(s) Found: Original implementation dequeued in insertion order, ignoring priority.
     public void TestPriorityQueue_HighestPriorityFirst()
     {
         var pq = new PriorityQueue();
@@ -23,7 +23,7 @@ public class PriorityQueueTests
     [TestMethod]
     // Scenario: Add multiple items with the same priority.
     // Expected Result: Items with equal priority are dequeued in FIFO order.
-    // Defect(s) Found: None yet.
+    // Defect(s) Found: Items with same priority were previously returned out of insertion order.
     public void TestPriorityQueue_TieBreakerFIFO()
     {
         var pq = new PriorityQueue();
@@ -39,7 +39,7 @@ public class PriorityQueueTests
     [TestMethod]
     // Scenario: Attempt to dequeue from an empty queue.
     // Expected Result: InvalidOperationException with specific message.
-    // Defect(s) Found: None yet.
+    // Defect(s) Found: No exception was originally thrown on empty dequeue.
     public void TestPriorityQueue_EmptyQueueThrows()
     {
         var pq = new PriorityQueue();
@@ -56,9 +56,9 @@ public class PriorityQueueTests
     }
 
     [TestMethod]
-    // Scenario: Mix of high and low priority with some duplicates
-    // Expected Result: Highest priorities first, tiebreaker by insertion order
-    // Defect(s) Found: None yet.
+    // Scenario: Mix of high and low priority with some duplicates.
+    // Expected Result: Highest priorities first, tie-breaking by insertion order.
+    // Defect(s) Found: Order of dequeue was incorrect when handling mixed priorities with ties.
     public void TestPriorityQueue_MixedWithTies()
     {
         var pq = new PriorityQueue();
